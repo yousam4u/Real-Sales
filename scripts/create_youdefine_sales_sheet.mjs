@@ -85,7 +85,7 @@ guide.getRange("A3:B10").values = [
   ["대표번호", "010-6689-2348"],
   ["Apps Script 코드", "medipark_apps_script_draft.gs 사용"],
   ["배포 방식", "웹앱 / 모든 사용자 접근 가능"],
-  ["랜딩 연결 위치", "medipark_landing_form_example.html의 APPS_SCRIPT_URL"],
+  ["랜딩 연결 위치", "index.html의 APPS_SCRIPT_URL"],
   ["주의", "접수 테스트 후 예시 행은 삭제해도 됩니다."],
 ];
 guide.getRange("A3:A10").format.fill = { color: "#F3E3C4" };
