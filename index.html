@@ -50,7 +50,6 @@ h2{font-family:'Noto Serif KR',serif;font-size:25px;font-weight:700;line-height:
 .visual-card{margin:0;overflow:hidden;border:1px solid var(--line);border-radius:4px;background:var(--white);box-shadow:0 12px 32px rgba(8,47,42,.08)}
 .visual-card img{display:block;width:100%;height:auto;object-fit:contain;background:var(--white)}
 .visual-card--hero{min-height:0}
-.visual-card--plan{margin-top:18px}
 .visual-card figcaption{padding:10px 12px;font-size:11px;color:var(--sub);line-height:1.55;background:var(--white)}
 .info-grid{display:grid;grid-template-columns:1fr;gap:14px;margin-top:24px}
 .info-card{overflow:hidden;background:var(--white);border:1px solid var(--line);border-radius:4px;box-shadow:0 8px 22px rgba(8,47,42,.08)}
@@ -63,6 +62,15 @@ h2{font-family:'Noto Serif KR',serif;font-size:25px;font-weight:700;line-height:
 .plan-gallery{display:grid;grid-template-columns:1fr;gap:14px;margin-top:22px}
 .plan-mini{background:var(--bg);border:1px solid var(--line);border-radius:4px;overflow:hidden}
 .plan-mini img{display:block;width:100%;height:auto;object-fit:contain;background:var(--white)}
+.expandable-image{cursor:zoom-in}
+.image-lightbox{position:fixed;inset:0;z-index:80;display:none;align-items:center;justify-content:center;padding:18px;background:rgba(8,47,42,.88)}
+.image-lightbox.is-open{display:flex}
+.image-lightbox__inner{position:relative;width:min(100%,980px);max-height:92vh;display:flex;flex-direction:column;gap:10px}
+.image-lightbox__image{display:block;width:100%;max-height:84vh;object-fit:contain;background:var(--white);border:1px solid rgba(233,220,192,.45);box-shadow:0 18px 48px rgba(0,0,0,.28)}
+.image-lightbox__caption{color:var(--accent-soft);font-size:13px;text-align:center;word-break:keep-all}
+.image-lightbox__close{position:absolute;top:-12px;right:-8px;width:38px;height:38px;border:1px solid rgba(233,220,192,.7);border-radius:50%;background:var(--white);color:var(--brand-dark);font-size:24px;line-height:1;cursor:pointer;box-shadow:0 8px 20px rgba(0,0,0,.22)}
+.image-lightbox__close:focus-visible,.expandable-image:focus-visible{outline:3px solid var(--accent);outline-offset:3px}
+@media (max-width:560px){.image-lightbox{padding:12px}.image-lightbox__close{top:8px;right:8px}.image-lightbox__image{max-height:78vh}.image-lightbox__caption{font-size:12px;padding:0 42px}}
 .plan-mini__body{padding:16px}
 .plan-mini__body strong{display:block;color:var(--brand);font-family:'Noto Serif KR',serif;font-size:20px;margin-bottom:6px}
 .plan-mini__body p{font-size:13px;color:var(--sub);word-break:keep-all}
@@ -259,10 +267,6 @@ td.hl{font-weight:800;color:var(--brand);background:rgba(185,151,91,.08)}
     <tr><td>101</td><td>333</td><td>101.99㎡</td><td>상담 가능</td></tr>
   </table>
   <p class="caption">59형은 분양 마감 · 현재 84A, 84B, 101 타입 상담 가능</p>
-    <figure class="visual-card visual-card--plan">
-    <img src="./hero_render/교육_4.jpg" alt="84A 평면 이미지">
-    <figcaption>84A 대표 평면 이미지 · 세부 구조는 최종 분양자료 기준으로 확인이 필요합니다.</figcaption>
-  </figure>
   <div class="plan-gallery">
     <article class="plan-mini">
       <img src="./hero_render/교육_4.jpg" alt="84A 평면 이미지">
@@ -426,6 +430,13 @@ td.hl{font-weight:800;color:var(--brand);background:rgba(185,151,91,.08)}
 </div>
 
 </div>
+<div class="image-lightbox" id="imageLightbox" aria-hidden="true">
+  <div class="image-lightbox__inner" role="dialog" aria-modal="true" aria-label="이미지 확대 보기">
+    <button class="image-lightbox__close" type="button" aria-label="확대 이미지 닫기">×</button>
+    <img class="image-lightbox__image" alt="확대 이미지">
+    <p class="image-lightbox__caption"></p>
+  </div>
+</div>
 <!-- 하단 고정 CTA -->
 <div class="fixed-cta">
   <p class="micro">모집공고 전 우선 안내 · 등록은 1분이면 충분합니다</p>
@@ -453,6 +464,54 @@ const visitDateInput = document.getElementById('visitDate');
 const visitTimeInput = document.getElementById('visitTime');
 
 let activeButtonPosition = 'form_submit';
+let lastLightboxTrigger = null;
+const imageLightbox = document.getElementById('imageLightbox');
+const lightboxImage = imageLightbox.querySelector('.image-lightbox__image');
+const lightboxCaption = imageLightbox.querySelector('.image-lightbox__caption');
+const lightboxCloseButton = imageLightbox.querySelector('.image-lightbox__close');
+
+function openImageLightbox(image) {
+  lastLightboxTrigger = image;
+  lightboxImage.src = image.currentSrc || image.src;
+  lightboxImage.alt = image.alt || '확대 이미지';
+  lightboxCaption.textContent = image.alt || '';
+  imageLightbox.classList.add('is-open');
+  imageLightbox.setAttribute('aria-hidden', 'false');
+  document.body.style.overflow = 'hidden';
+  lightboxCloseButton.focus();
+}
+
+function closeImageLightbox() {
+  imageLightbox.classList.remove('is-open');
+  imageLightbox.setAttribute('aria-hidden', 'true');
+  document.body.style.overflow = '';
+  lightboxImage.removeAttribute('src');
+  if (lastLightboxTrigger) lastLightboxTrigger.focus();
+}
+
+document.querySelectorAll('.visual-card img, .info-card img, .plan-mini img').forEach((image) => {
+  image.classList.add('expandable-image');
+  image.setAttribute('tabindex', '0');
+  image.setAttribute('role', 'button');
+  image.setAttribute('aria-label', `${image.alt || '이미지'} 확대 보기`);
+  image.addEventListener('click', () => openImageLightbox(image));
+  image.addEventListener('keydown', (event) => {
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      openImageLightbox(image);
+    }
+  });
+});
+
+lightboxCloseButton.addEventListener('click', closeImageLightbox);
+imageLightbox.addEventListener('click', (event) => {
+  if (event.target === imageLightbox) closeImageLightbox();
+});
+document.addEventListener('keydown', (event) => {
+  if (event.key === 'Escape' && imageLightbox.classList.contains('is-open')) {
+    closeImageLightbox();
+  }
+});
 
 document.querySelectorAll('[data-focus-form]').forEach((button) => {
   button.addEventListener('click', () => {
